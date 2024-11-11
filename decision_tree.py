@@ -1,5 +1,3 @@
-# decision_tree.py
-
 from image_processing import measure_changes
 
 def decision_tree(images, change_threshold=10000):
