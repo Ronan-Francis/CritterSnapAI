@@ -22,9 +22,3 @@ CritterSnapAI is a project designed to process and classify images captured by w
 - [`image_processing.py`](CritterSnapAI/image_processing.py): Provides image processing utilities like [`convert_to_grayscale`](CritterSnapAI/image_processing.py) and [`measure_changes`](CritterSnapAI/image_processing.py).
 - [`event_processing.py`](CritterSnapAI/event_processing.py): Contains the function [`copy_events_with_red_box`](CritterSnapAI/event_processing.py) to mark and save event images.
 - [`main.py`](CritterSnapAI/main.py): The main script to run the entire image processing and classification pipeline.
-
-## Testing
-
-To run tests, use the following command:
-```sh
-pytest
