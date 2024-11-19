@@ -1,6 +1,6 @@
 import os
 from PIL import Image
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def get_images_from_folder(folder_path):
     # Fetch all files in the directory
@@ -26,23 +26,19 @@ def extract_date_time_from_exif(filepath):
         return None
 
 def sort_images_by_date_time(folder_path):
+    print(f"Sorting images by date and time in {folder_path}")
     images = get_images_from_folder(folder_path)
     images_with_dates = []
     
     for image in images:
-        filepath = os.path.join(folder_path, image)
-        date_time = extract_date_time_from_exif(filepath)
+        image_path = os.path.join(folder_path, image)
+        date_time = extract_date_time_from_exif(image_path)
         if date_time:
-            # Open the image as a Pillow Image object
-            with Image.open(filepath) as img:
-                # Add image object along with its date and time
+            with Image.open(image_path) as img:
                 images_with_dates.append((img.copy(), date_time))
     
     # Sort images by date and time
-    sorted_images = sorted(images_with_dates, key=lambda x: x[1])
-    return sorted_images
+    images_with_dates.sort(key=lambda x: x[1])
+    
+    return images_with_dates
 
-def write_sorted_images_to_log(sorted_images, output_path):
-    with open(output_path, 'w') as log_file:
-        for image, date_time in sorted_images:
-            log_file.write(f"{image}\t{date_time}\n")
