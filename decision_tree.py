@@ -24,7 +24,7 @@ def decision_tree(images, change_threshold):
         future = images[i + 1]
 
         change = measure_changes(past, present, future)
-        #print(f"Change score for frame {i}: {change}")
+        print(f"Change score for frame {i}: {change}")
         
         # Classify as event or non-event based on change threshold
         if change > change_threshold:
