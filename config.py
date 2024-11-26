@@ -8,4 +8,6 @@ change_threshold = 2653540  # Adjust this based on your images
 
 # use the above values to adjust the change_threshold based on the images you are working with
 # The change_threshold is the pixel change threshold to classify an event
-# 
+white_pixel_threshold = 50000  # Adjust this based on your images
+
+

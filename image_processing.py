@@ -12,36 +12,33 @@ def detect_edge(img):
 
 def measure_changes(past, present, future):
     """
-    Calculate the average pixel change between three consecutive images
-    to detect significant changes.
+    Measures pixel changes between three images to classify events.
 
     Parameters:
-    - past: The previous frame (Pillow Image object).
-    - present: The current frame (Pillow Image object).
-    - future: The next frame (Pillow Image object).
+    - past: The past image.
+    - present: The present image.
+    - future: The future image.
 
     Returns:
-    - change_score: A numerical score representing the pixel change intensity.
+    - pixel_changes: The number of pixel changes detected.
     """
+    # Replace with actual logic based on your requirements
+    if past is None or present is None or future is None:
+        return 0
 
-    # Convert images to grayscale and detect edges
-    past_edges = detect_edge(past)
-    present_edges = detect_edge(present)
-    future_edges = detect_edge(future)
+    # Convert images to grayscale
+    past_gray = past.convert("L")
+    present_gray = present.convert("L")
+    future_gray = future.convert("L")
 
-    # Calculate the absolute differences between consecutive edge-detected images
-    diff_past_present = ImageChops.difference(past_edges, present_edges)
-    diff_present_future = ImageChops.difference(present_edges, future_edges)
+    # Calculate pixel differences
+    past_diff = ImageChops.difference(past_gray, present_gray)
+    future_diff = ImageChops.difference(present_gray, future_gray)
 
-    # Convert difference images to numpy arrays for pixel intensity calculation
-    diff_past_present = np.array(diff_past_present)
-    diff_present_future = np.array(diff_present_future)
+    # Count non-zero pixels (indicating changes)
+    past_changes = sum(past_diff.getdata())
+    future_changes = sum(future_diff.getdata())
 
-    # Calculate the change score as the sum of absolute differences
-    change_score_past_present = np.sum(diff_past_present)
-    change_score_present_future = np.sum(diff_present_future)
-
-    # Average the scores from past-present and present-future differences
-    change_score = (change_score_past_present + change_score_present_future) / 2
-
-    return change_score
+    # Return the average of changes
+    #print(f"Past changes: {past_changes}, Future changes: {future_changes}")
+    return (past_changes + future_changes) / 2
