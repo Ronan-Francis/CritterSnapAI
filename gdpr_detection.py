@@ -18,5 +18,5 @@ def is_gdpr_image(img, white_pixel_threshold=50000):
     # Count white pixels
     white_pixel_count = sum(1 for pixel in pixels if pixel == (255, 255, 255))
     
-    # print(f"White pixel count: {white_pixel_count}")
+    print(f"White pixel count: {white_pixel_count}")
     return white_pixel_count >= white_pixel_threshold
