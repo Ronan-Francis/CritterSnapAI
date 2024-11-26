@@ -32,7 +32,7 @@ def sort_images_by_date_time(folder_path):
     images_with_dates = []
     
     for image in images:
-        print(f"Processing {image}")
+        print(f"Processing {image} ({images.index(image) + 1}/{len(images)}) - {((images.index(image) + 1) / len(images)) * 100:.2f}% complete", end="\r")
         image_path = os.path.join(folder_path, image)
         date_time = extract_date_time_from_exif(image_path)
         if date_time:
@@ -41,6 +41,7 @@ def sort_images_by_date_time(folder_path):
     
     # Sort images by date and time
     images_with_dates.sort(key=lambda x: x[1])
+    print("Image sorting complete.                ")
     
     return images_with_dates
 
@@ -70,14 +71,6 @@ def group_images_by_event(images_with_dates, time_gap_threshold=timedelta(hours=
 
     return grouped_events
 
-def create_event_directories(grouped_events, output_directory):
-    """
-    Creates directories for each event and moves the corresponding images.
-
-    Parameters:
-    - grouped_events: List of events, where each event is a list of image file paths.
-    - output_directory: Directory to store event images.
-    """
 def create_event_directories(grouped_events, output_directory):
     """
     Creates directories for each event and moves the corresponding images.
