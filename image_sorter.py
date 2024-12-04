@@ -2,6 +2,8 @@ import os
 import shutil
 from PIL import Image
 from datetime import datetime, timedelta
+from gdpr_detection import is_not_gdpr_image
+from config import white_pixel_threshold
 
 def get_images_from_folder(folder_path):
     # Fetch all files in the directory
@@ -32,19 +34,19 @@ def sort_images_by_date_time(folder_path):
     images_with_dates = []
     
     for image in images:
-        print(f"Processing {image} ({images.index(image) + 1}/{len(images)}) - {((images.index(image) + 1) / len(images)) * 100:.2f}% complete", end="\r")
+        print(f"Loading in {image} ({images.index(image) + 1}/{len(images)}) - {((images.index(image) + 1) / len(images)) * 100:.2f}% complete", end="\r")
         image_path = os.path.join(folder_path, image)
-        date_time = extract_date_time_from_exif(image_path)
-        if date_time:
-            with Image.open(image_path) as img:
-                images_with_dates.append((img.copy(), date_time))
+        with Image.open(image_path) as img:
+            if is_not_gdpr_image(img, white_pixel_threshold):
+                date_time = extract_date_time_from_exif(image_path)
+                if date_time:
+                    images_with_dates.append((img.copy(), date_time))
     
     # Sort images by date and time
     images_with_dates.sort(key=lambda x: x[1])
     print("Image sorting complete.                ")
     
     return images_with_dates
-
 def group_images_by_event(images_with_dates, time_gap_threshold=timedelta(hours=1)):
     print("Grouping images into events based on time gaps")
     grouped_events = []
@@ -69,6 +71,7 @@ def group_images_by_event(images_with_dates, time_gap_threshold=timedelta(hours=
     if current_event:
         grouped_events.append(current_event)
 
+    print(f"Total number of groups: {len(grouped_events)}")
     return grouped_events
 
 def create_event_directories(grouped_events, output_directory):

@@ -1,47 +1,48 @@
 from config import directory_path, output_directory, change_threshold, white_pixel_threshold, output_log_path
-from image_sorter import sort_images_by_date_time, group_images_by_event, create_event_directories
+from image_sorter import sort_images_by_date_time, group_images_by_event
 from decision_tree import decision_tree
 from imageObj import ImageObject
 import os
-from PIL import Image
-from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 
 def process_group(group, change_threshold, white_pixel_threshold, output_directory):
     image_objects = [ImageObject(img[0], img[1], img[0]) for img in group]
     if len(image_objects) < 3:
         return [], []
 
-    # Optimize decision tree processing (assumes decision_tree itself is efficient)
     events, non_events = decision_tree(image_objects, change_threshold, white_pixel_threshold, output_directory)
     return events, non_events
 
 def main():
+    start_time = time.time()  # Record the start time
     # Sort images by date and time
-    print("Starting the image sorting and classification process...")
+    print("Starting the image sorting process...")
     images_with_dates = sort_images_by_date_time(directory_path)
-    print("Image sorting complete.")
 
     # Group images by event
-    print("Grouping images into events based on time gaps...")
     grouped_events = group_images_by_event(images_with_dates)
 
     all_events = []
     all_non_events = []
 
-    # Parallel processing of groups
-    with ThreadPoolExecutor(max_workers=min(os.cpu_count() * 2, len(grouped_events))) as executor:
+    # Parallel processing of groups using ThreadPoolExecutor
+# Parallel processing of groups using ThreadPoolExecutor
+    max_workers = min(4, os.cpu_count())  # Limit to 4 workers or the number of CPUs, whichever is lower    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(process_group, group, change_threshold, white_pixel_threshold, output_directory): group for group in grouped_events}
         for i, future in enumerate(as_completed(futures)):
             events, non_events = future.result()
             all_events.extend(events)
             all_non_events.extend(non_events)
 
-            if i % max(1, len(grouped_events) // 10) == 0:  # Update every 10%
-                percentage_complete = (i / len(grouped_events)) * 100
-                print(f"Processed: {i}/{len(grouped_events)} ({percentage_complete:.2f}% complete)", end="\r")
+            percentage_complete = ((i + 1) / len(grouped_events)) * 100
+            print(f"Processed: {i + 1}/{len(grouped_events)} ({percentage_complete:.2f}% complete)", end="\r")
 
+    end_time = time.time()  # Record the end time
+    elapsed_time = end_time - start_time  # Calculate the elapsed time
     print(f"\nImage sorting and classification process completed.")
+    print(f"Time elapsed: {elapsed_time:.2f} seconds")
 
     # Output the classification results
     print(f"Total Events Detected: {len(all_events)}")
