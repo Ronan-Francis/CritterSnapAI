@@ -41,7 +41,7 @@ def main():
 
     end_time = time.time()  # Record the end time
     elapsed_time = end_time - start_time  # Calculate the elapsed time
-    print(f"\nImage sorting and classification process completed.")
+    print(f"\nEvent sorting and classification process completed.")
     print(f"Time elapsed: {elapsed_time:.2f} seconds")
 
     # Output the classification results
