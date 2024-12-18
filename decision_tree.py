@@ -1,9 +1,4 @@
-import os
-from PIL import Image
-from imageObj import ImageObject
 from image_processing import measure_changes
-from gdpr_detection import is_not_gdpr_image
-from concurrent.futures import ProcessPoolExecutor, as_completed
 # from wildlife_detection_classification import wildlife_detection_classification
 
 def process_image(image_objects, index, change_threshold):

@@ -3,7 +3,7 @@ from image_sorter import sort_images_by_date_time, group_images_by_event
 from decision_tree import decision_tree
 from imageObj import ImageObject
 import os
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import time
 import shutil
 
@@ -26,6 +26,7 @@ def process_group(group, change_threshold, white_pixel_threshold, output_directo
         # Copy the file if it doesn't already exist in the output directory
         if not os.path.exists(dest_path):
             shutil.copy2(src_path, dest_path)
+            # print(f"Copying {src_path} to {dest_path}", end="\r")
 
     return events, non_events
 
@@ -41,9 +42,8 @@ def main():
     all_events = []
     all_non_events = []
 
-    # Parallel processing of groups using ThreadPoolExecutor
-    max_workers = min(4, os.cpu_count())  # Limit to 4 workers or the number of CPUs, whichever is lower
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    # Parallel processing of groups using ProcessPoolExecutor
+    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
         futures = {
             executor.submit(process_group, group, change_threshold, white_pixel_threshold, output_directory): group 
             for group in grouped_events
