@@ -1,22 +1,19 @@
-from datetime import timedelta
+import urllib.request
+import os
+from config import output_directory, base_url, start_file, end_file
 
+# Create output directory if it doesn't exist
+os.makedirs(output_directory, exist_ok=True)
 
-def group_images_by_event(images_with_dates, time_gap_minutes=30):
-    events = []
-    current_event = []
-    last_image_time = None
-    
-    for image, date_time in images_with_dates:
-        if last_image_time and (date_time - last_image_time > timedelta(minutes=time_gap_minutes)):
-            # Large gap detected, start a new event
-            events.append(current_event)
-            current_event = []
-        
-        current_event.append(image)
-        last_image_time = date_time
-    
-    # Add the last event if it exists
-    if current_event:
-        events.append(current_event)
-    
-    return events
+# Download files in sequence
+for i in range(start_file, end_file):
+    file_name = f"{i:04d}.jpg"
+    file_url = f"{base_url}{file_name}"
+    output_path = os.path.join(output_directory, file_name)
+
+    try:
+        urllib.request.urlretrieve(file_url, output_path)
+        print(f"Downloaded: {file_name}")
+    except Exception as e:
+        print(f"Failed to download {file_name}: {e}")
+

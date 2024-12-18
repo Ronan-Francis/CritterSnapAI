@@ -4,7 +4,7 @@ from imageObj import ImageObject
 from image_processing import measure_changes
 from gdpr_detection import is_not_gdpr_image
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from wildlife_detection_classification import wildlife_detection_classification
+# from wildlife_detection_classification import wildlife_detection_classification
 
 def process_image(image_objects, index, change_threshold):
     past = image_objects[index - 1].get_image()
@@ -25,10 +25,8 @@ def decision_tree(image_objects, change_threshold, white_pixel_threshold, gdpr_o
     for i in range(1, len(image_objects) - 1):
         event, non_event = process_image(image_objects, i, change_threshold)
         if event:
-            detection_result, classification_results = wildlife_detection_classification(event.get_image())
-            events.append((event, detection_result, classification_results))
+            events.append(event)
         if non_event:
-            detection_result, classification_results = wildlife_detection_classification(non_event.get_image())
-            non_events.append((non_event, detection_result, classification_results))
+            non_events.append(non_event)
 
     return events, non_events

@@ -5,13 +5,28 @@ from imageObj import ImageObject
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+import shutil
 
 def process_group(group, change_threshold, white_pixel_threshold, output_directory):
-    image_objects = [ImageObject(img[0], img[1], img[0]) for img in group]
+    image_objects = [ImageObject(img[0], img[1], img[2]) for img in group]
     if len(image_objects) < 3:
         return [], []
 
     events, non_events = decision_tree(image_objects, change_threshold, white_pixel_threshold, output_directory)
+
+    # Ensure the output directory exists
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    # Copy all event images to the output directory
+    for event_img in events:
+        src_path = event_img.get_file_path()
+        # Construct the destination path
+        dest_path = os.path.join(output_directory, os.path.basename(src_path))
+        # Copy the file if it doesn't already exist in the output directory
+        if not os.path.exists(dest_path):
+            shutil.copy2(src_path, dest_path)
+
     return events, non_events
 
 def main():
@@ -27,10 +42,12 @@ def main():
     all_non_events = []
 
     # Parallel processing of groups using ThreadPoolExecutor
-# Parallel processing of groups using ThreadPoolExecutor
-    max_workers = min(4, os.cpu_count())  # Limit to 4 workers or the number of CPUs, whichever is lower    
+    max_workers = min(4, os.cpu_count())  # Limit to 4 workers or the number of CPUs, whichever is lower
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(process_group, group, change_threshold, white_pixel_threshold, output_directory): group for group in grouped_events}
+        futures = {
+            executor.submit(process_group, group, change_threshold, white_pixel_threshold, output_directory): group 
+            for group in grouped_events
+        }
         for i, future in enumerate(as_completed(futures)):
             events, non_events = future.result()
             all_events.extend(events)
