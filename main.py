@@ -1,6 +1,6 @@
 from config import directory_path, output_directory, change_threshold, white_pixel_threshold, output_log_path
 from image_sorter import sort_images_by_date_time, group_images_by_event
-from decision_tree import decision_tree
+from decision_tree import process_image
 from imageObj import ImageObject
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -8,27 +8,13 @@ import time
 import shutil
 
 def process_group(group, change_threshold, white_pixel_threshold, output_directory):
-    image_objects = [ImageObject(img[0], img[1], img[2]) for img in group]
-    if len(image_objects) < 3:
-        return [], []
+    batch_results = []
+    for index in range(1, len(group) - 1):
+        event, non_event = process_image(group, index, change_threshold)
+        batch_results.append((event, non_event))
 
-    events, non_events = decision_tree(image_objects, change_threshold, white_pixel_threshold, output_directory)
-
-    # Ensure the output directory exists
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
-
-    # Copy all event images to the output directory
-    for event_img in events:
-        src_path = event_img.get_file_path()
-        # Construct the destination path
-        dest_path = os.path.join(output_directory, os.path.basename(src_path))
-        # Copy the file if it doesn't already exist in the output directory
-        if not os.path.exists(dest_path):
-            shutil.copy2(src_path, dest_path)
-            # print(f"Copying {src_path} to {dest_path}", end="\r")
-
-    return events, non_events
+    events, non_events = zip(*batch_results) if batch_results else ([], [])
+    return list(filter(None, events)), list(filter(None, non_events))
 
 def main():
     start_time = time.time()  # Record the start time
@@ -43,7 +29,7 @@ def main():
     all_non_events = []
 
     # Parallel processing of groups using ProcessPoolExecutor
-    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
+    with ProcessPoolExecutor(max_workers=min(os.cpu_count(), len(grouped_events))) as executor:
         futures = {
             executor.submit(process_group, group, change_threshold, white_pixel_threshold, output_directory): group 
             for group in grouped_events
