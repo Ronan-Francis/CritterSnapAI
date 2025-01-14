@@ -1,9 +1,14 @@
+from functools import lru_cache
+from PIL import Image
 import os
 import shutil
-from PIL import Image
 from datetime import datetime, timedelta
-from gdpr_detection import is_not_gdpr_image
 from config import white_pixel_threshold
+from gdpr_detection import is_not_gdpr_image
+
+@lru_cache(maxsize=100)
+def load_image_cached(file_path):
+    return Image.open(file_path)
 
 def get_images_from_folder(folder_path):
     # Fetch all files in the directory
@@ -14,7 +19,7 @@ def extract_date_time_from_exif(filepath):
         # Open the image file
         with Image.open(filepath) as img:
             exif_data = img._getexif()
-            if exif_data:
+            if (exif_data):
                 # Extract DateTimeOriginal or DateTime as the primary sources
                 date_time_str = exif_data.get(36867)  # DateTimeOriginal
                 if not date_time_str:
@@ -38,7 +43,6 @@ def extract_date_time_from_exif(filepath):
         print(f"Error reading EXIF data from {filepath}: {e}")
         return None
 
-
 def sort_images_by_date_time(folder_path):
     print(f"Sorting images by date and time in {folder_path}")
     images = get_images_from_folder(folder_path)
@@ -47,12 +51,12 @@ def sort_images_by_date_time(folder_path):
     for idx, image_name in enumerate(images, start=1):
         print(f"Loading in {image_name} ({idx}/{len(images)}) - {(idx / len(images)) * 100:.2f}% complete", end="\r")
         image_path = os.path.join(folder_path, image_name)
-        with Image.open(image_path) as img:
-            if is_not_gdpr_image(img, white_pixel_threshold):
-                date_time = extract_date_time_from_exif(image_path)
-                if date_time:
-                    # Include file_path as the third element
-                    images_with_dates.append((img.copy(), date_time, image_path))
+        img = load_image_cached(image_path)
+        if is_not_gdpr_image(img, white_pixel_threshold):
+            date_time = extract_date_time_from_exif(image_path)
+            if date_time:
+                # Include file_path as the third element
+                images_with_dates.append((img.copy(), date_time, image_path))
 
     images_with_dates.sort(key=lambda x: x[1])
     print("Image sorting complete.                ")
