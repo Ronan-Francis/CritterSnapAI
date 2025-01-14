@@ -10,7 +10,11 @@ def detect_edge(img):
     
     return edges
 
-def measure_changes(past, present, future):
+def downsample_image(img, scale_factor=0.5):
+    width, height = img.size
+    return img.resize((int(width * scale_factor), int(height * scale_factor)))
+
+def measure_changes(past, present, future, scale_factor=0.5):
     """
     Measures pixel changes between three images to classify events.
 
@@ -18,27 +22,23 @@ def measure_changes(past, present, future):
     - past: The past image.
     - present: The present image.
     - future: The future image.
+    - scale_factor: The factor by which to downsample the images.
 
     Returns:
     - pixel_changes: The number of pixel changes detected.
     """
-    # Replace with actual logic based on your requirements
     if past is None or present is None or future is None:
         return 0
 
-    # Convert images to grayscale
-    past_gray = past.convert("L")
-    present_gray = present.convert("L")
-    future_gray = future.convert("L")
+    past_ds = downsample_image(past, scale_factor)
+    present_ds = downsample_image(present, scale_factor)
+    future_ds = downsample_image(future, scale_factor)
 
-    # Calculate pixel differences
-    past_diff = ImageChops.difference(past_gray, present_gray)
-    future_diff = ImageChops.difference(present_gray, future_gray)
+    past_array = np.array(past_ds.convert("L"))
+    present_array = np.array(present_ds.convert("L"))
+    future_array = np.array(future_ds.convert("L"))
 
-    # Count non-zero pixels (indicating changes)
-    past_changes = sum(past_diff.getdata())
-    future_changes = sum(future_diff.getdata())
+    past_diff = np.abs(past_array - present_array)
+    future_diff = np.abs(present_array - future_array)
 
-    # Return the average of changes
-    #print(f"Past changes: {past_changes}, Future changes: {future_changes}")
-    return (past_changes + future_changes) / 2
+    return (np.sum(past_diff) + np.sum(future_diff)) / 2
