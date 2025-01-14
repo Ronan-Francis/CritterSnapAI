@@ -8,13 +8,21 @@ import time
 import shutil
 
 def process_group(group, change_threshold, white_pixel_threshold, output_directory):
-    batch_results = []
+    # Convert tuples to ImageObject instances if necessary
+    if isinstance(group[0], tuple):
+        group = [ImageObject(img, date, path) for img, date, path in group]
+
+    events = []
+    non_events = []
     for index in range(1, len(group) - 1):
         event, non_event = process_image(group, index, change_threshold)
-        batch_results.append((event, non_event))
+        if event:
+            events.append(event)
+        if non_event:
+            non_events.append(non_event)
 
-    events, non_events = zip(*batch_results) if batch_results else ([], [])
-    return list(filter(None, events)), list(filter(None, non_events))
+    return events, non_events
+
 
 def main():
     start_time = time.time()  # Record the start time
