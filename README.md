@@ -4,7 +4,13 @@ CritterSnapAI is a project designed to process and classify images captured by w
 
 ## Project Structure
 
-
+- **app_config.py**: Stores configuration parameters (paths, thresholds).
+- **data_structures.py**: Contains lightweight classes (e.g., `ImageObject`) for holding image data.
+- **gdpr_utils.py**: Handles GDPR filtering (white-pixel thresholds, etc.).
+- **image_utils.py**: Provides image-processing functions (downsampling, measuring changes).
+- **classification.py**: Implements decision-tree logic and additional classification steps.
+- **sorting_utils.py**: Sorts and groups images by date/time, organizes them into events.
+- **main.py**: Orchestrates the end-to-end workflow (sorting, classification, output logging).
 
 ## Usage
 
@@ -14,11 +20,17 @@ CritterSnapAI is a project designed to process and classify images captured by w
     ```sh
     python CritterSnapAI/main.py
     ```
+    ## Code Overview
 
-## Code Overview
+    The code is organized into distinct modules, each with a specific responsibility to streamline the processing and classification of wildlife images:
 
-- [`load_images.py`](CritterSnapAI/load_images.py): Contains the function [`load_images_from_directory`](CritterSnapAI/load_images.py) to load images from a specified directory.
-- [`decision_tree.py`](CritterSnapAI/decision_tree.py): Implements the [`decision_tree`](CritterSnapAI/decision_tree.py) function to classify images based on pixel changes.
-- [`image_processing.py`](CritterSnapAI/image_processing.py): Provides image processing utilities like [`convert_to_grayscale`](CritterSnapAI/image_processing.py) and [`measure_changes`](CritterSnapAI/image_processing.py).
-- [`event_processing.py`](CritterSnapAI/event_processing.py): Contains the function [`copy_events_with_red_box`](CritterSnapAI/event_processing.py) to mark and save event images.
-- [`main.py`](CritterSnapAI/main.py): The main script to run the entire image processing and classification pipeline.
+    - **[app_config.py](CritterSnapAI/app_config.py)**: Manages configuration settings, including paths and processing thresholds.
+    - **[data_structures.py](CritterSnapAI/data_structures.py)**: Defines simple classes to encapsulate image data and related attributes.
+    - **[gdpr_utils.py](CritterSnapAI/gdpr_utils.py)**: Ensures compliance with GDPR by applying necessary filters to the images.
+    - **[image_utils.py](CritterSnapAI/image_utils.py)**: Contains functions for image manipulation, such as downsampling and detecting changes.
+    - **[classification.py](CritterSnapAI/classification.py)**: Implements the logic for classifying images using decision trees and other methods.
+    - **[sorting_utils.py](CritterSnapAI/sorting_utils.py)**: Organizes images chronologically and groups them into events based on timestamps.
+    - **[main.py](CritterSnapAI/main.py)**: Coordinates the entire workflow, from sorting and classification to logging the results.
+
+    This modular approach enhances the maintainability and scalability of the project.
+
