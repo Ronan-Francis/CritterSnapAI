@@ -18,6 +18,7 @@ def process_image(image_objects, index, change_threshold):
     future = image_objects[index + 1].get_image() if index + 1 < len(image_objects) else None
 
     pixel_changes = measure_changes(past, present, future)
+    print(f"Pixel changes: {pixel_changes:.2f}")
 
     if pixel_changes > change_threshold:
         # This image is classified as event

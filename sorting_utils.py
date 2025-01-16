@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 from PIL import Image
 from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor
 
 from gdpr_utils import is_not_gdpr_image
 from data_structures import ImageObject
@@ -22,6 +23,14 @@ def get_images_from_folder(folder_path):
         f for f in os.listdir(folder_path)
         if os.path.isfile(os.path.join(folder_path, f))
     ]
+
+def load_images_in_parallel(image_paths):
+    """
+    Loads images in parallel using a thread pool.
+    """
+    with ThreadPoolExecutor() as executor:
+        images = list(executor.map(load_image_cached, image_paths))
+    return images
 
 def extract_date_time_from_exif(filepath):
     """
@@ -59,15 +68,16 @@ def sort_images_by_date_time(folder_path, white_pixel_threshold):
     """
     print(f"Sorting images by date/time in {folder_path}")
     image_files = get_images_from_folder(folder_path)
-    images_with_dates = []
+    image_paths = [os.path.join(folder_path, image_name) for image_name in image_files]
     
-    for idx, image_name in enumerate(image_files, start=1):
-        print(f"Loading {image_name} ({idx}/{len(image_files)}) - "
+    # Load images in parallel
+    images = load_images_in_parallel(image_paths)
+    
+    images_with_dates = []
+    for idx, (img, image_path) in enumerate(zip(images, image_paths), start=1):
+        print(f"Processing ({idx}/{len(image_files)}) - "
               f"{(idx / len(image_files)) * 100:.2f}% complete", end="\r")
 
-        image_path = os.path.join(folder_path, image_name)
-        img = load_image_cached(image_path)
-        
         if is_not_gdpr_image(img, white_pixel_threshold):
             date_time = extract_date_time_from_exif(image_path)
             if date_time:

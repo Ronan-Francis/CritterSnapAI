@@ -1,6 +1,6 @@
-# image_utils.py
 from PIL import Image, ImageFilter
 import numpy as np
+from skimage.metrics import structural_similarity as ssim
 
 def downsample_image(img, scale_factor=0.5):
     """
@@ -18,7 +18,7 @@ def downsample_image(img, scale_factor=0.5):
 
 def measure_changes(past, present, future, scale_factor=0.5):
     """
-    Measures pixel changes between three images to classify events.
+    Measures pixel changes between three images to classify events using SSIM.
     
     Parameters:
     - past: The past image (PIL Image)
@@ -27,7 +27,7 @@ def measure_changes(past, present, future, scale_factor=0.5):
     - scale_factor: The factor by which to downsample the images
     
     Returns:
-    - The average pixel difference between (past, present) and (present, future)
+    - The average SSIM between (past, present) and (present, future)
     """
     if past is None or present is None or future is None:
         return 0
@@ -40,7 +40,7 @@ def measure_changes(past, present, future, scale_factor=0.5):
     present_array = np.array(present_ds.convert("L"), dtype=np.float32)
     future_array = np.array(future_ds.convert("L"), dtype=np.float32)
 
-    diff_prev_curr = np.abs(past_array - present_array).sum()
-    diff_curr_next = np.abs(present_array - future_array).sum()
+    ssim_prev_curr = ssim(past_array, present_array, data_range=255)
+    ssim_curr_next = ssim(present_array, future_array, data_range=255)
 
-    return (diff_prev_curr + diff_curr_next) / 2
+    return (ssim_prev_curr + ssim_curr_next) / 2
