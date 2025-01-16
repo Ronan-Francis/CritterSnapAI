@@ -1,9 +1,9 @@
-# sorting_utils.py
 import os
 from datetime import datetime, timedelta
 from PIL import Image
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor
+from shutil import copy2
 
 from gdpr_utils import is_not_gdpr_image
 from data_structures import ImageObject
@@ -118,25 +118,30 @@ def group_images_by_event(images_with_dates, time_gap_threshold=timedelta(hours=
 
 def create_event_directories(grouped_events, output_directory):
     """
-    Creates directories for each event and moves corresponding images.
+    Copies images from the grouped events into a specified output directory.
+
+    Parameters:
+    - grouped_events: List of lists of ImageObject, where each sublist is an event group.
+    - output_directory: Directory to store the event images.
+
+    Behavior:
+    - For each event group, create a subfolder (e.g., event_0, event_1, ...).
+    - Copy all images in that group into the subfolder.
+    - Leaves the original files in place (no deletion or moving).
     """
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
-    for i, event in enumerate(grouped_events):
+    for i, event_group in enumerate(grouped_events):
         event_directory = os.path.join(output_directory, f"event_{i}")
         os.makedirs(event_directory, exist_ok=True)
 
-        for image_obj in event:
-            image_path = image_obj.get_file_path()
-            if not os.path.exists(image_path):
-                continue  # If already moved/removed
+        for image_obj in event_group:
+            # Retrieve the original file path
+            src_path = image_obj.get_file_path()
+            # Derive the destination file path
+            dest_filename = os.path.basename(src_path)
+            dest_path = os.path.join(event_directory, dest_filename)
             
-            image_name = os.path.basename(image_path)
-            destination = os.path.join(event_directory, image_name)
-
-            with open(image_path, 'rb') as src:
-                with open(destination, 'wb') as dst:
-                    dst.write(src.read())
-
-            os.remove(image_path)
+            # Copy the file instead of moving it or deleting the source
+            copy2(src_path, dest_path)
