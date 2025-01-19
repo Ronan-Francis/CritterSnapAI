@@ -27,29 +27,6 @@ def process_image(image_objects, index, change_threshold):
         # This image is classified as non-event
         return None, image_objects[index]
 
-def decision_tree(image_objects, change_threshold):
-    """
-    Example 'decision tree' approach that iterates over a list of images,
-    classifying each one as event or non-event.
-
-    Parameters:
-    - image_objects: A list of ImageObject instances
-    - change_threshold: Threshold above which we classify as event
-
-    Returns:
-    - (events, non_events) -> List[ImageObject], List[ImageObject]
-    """
-    events = []
-    non_events = []
-
-    for i in range(1, len(image_objects) - 1):
-        event_obj, non_event_obj = process_image(image_objects, i, change_threshold)
-        if event_obj:
-            events.append(event_obj)
-        if non_event_obj:
-            non_events.append(non_event_obj)
-
-    return events, non_events
 
 def process_group(group, change_threshold):
     """
