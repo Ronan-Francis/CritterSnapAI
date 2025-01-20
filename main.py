@@ -61,13 +61,15 @@ def main():
     for event in all_events:
         image_path = event.get_file_path()
         prediction = predict_image(image_path, model)
-        print(f"{image_path}: {prediction}")
+        relative_image_path = os.path.relpath(image_path, directory_path)
+        print(f"{relative_image_path}: {prediction}")
     
     print("\nPredicting non_event content (Animal vs. Non-Animal):")
     for non_event in all_non_events:
         image_path = non_event.get_file_path()
         prediction = predict_image(image_path, model)
-        print(f"{image_path}: {prediction}")
+        relative_image_path = os.path.relpath(image_path, directory_path)
+        print(f"{relative_image_path}: {prediction}")
         
     end_time = time.time()
     elapsed_time = end_time - start_time
