@@ -1,5 +1,5 @@
-# directory_path = r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\example\as_conservationistFrankfurt\IE_Forest_County_Wicklow_21_loc_01-20241031T145429Z-001\IE_Forest_County_Wicklow_21_loc_01"  # Adjust this with your correct path
-directory_path = r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\example\eccv_18_all_images_sm"  # Adjust this with your correct path
+directory_path = r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\example\as_conservationistFrankfurt\IE_Forest_County_Wicklow_21_loc_01-20241031T145429Z-001\IE_Forest_County_Wicklow_21_loc_01"  # Adjust this with your correct path
+# directory_path = r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\example\eccv_18_all_images_sm"  # Adjust this with your correct path
 output_directory = r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\output"  # Adjust this with your correct path
 output_log_path = r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\output\output_log.txt"  # Adjust this with your correct path
 change_threshold = 0.7 # Adjust this based on your images

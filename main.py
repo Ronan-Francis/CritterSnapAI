@@ -54,7 +54,7 @@ def main():
 
     # 6. Train the animal classifier using labeled data
     print("\nTraining animal classifier...")
-    model = train_animal_classifier(animal_training_path, non_animal_training_path)
+    model = train_animal_classifier(animal_training_path)
 
     # 7. Use the trained model to predict on each event
     print("\nPredicting event content (Animal vs. Non-Animal):")
