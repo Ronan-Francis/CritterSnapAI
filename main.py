@@ -55,6 +55,10 @@ def main():
     # 6. Train the animal classifier using labeled data
     print("\nTraining animal classifier...")
     model = train_animal_classifier(animal_training_path)
+    event_animal_total = 0
+    event_non_animal_total = 0
+    nEvent_animal_total = 0
+    nEvent_non_animal_total = 0
 
     # 7. Use the trained model to predict on each event
     print("\nPredicting event content (Animal vs. Non-Animal):")
@@ -63,7 +67,12 @@ def main():
         prediction = predict_image(image_path, model)
         relative_image_path = os.path.relpath(image_path, directory_path)
         print(f"{relative_image_path}: {prediction}")
-    
+        
+        if "Animal" in prediction:
+            event_animal_total += 1
+        if "Non-Animal" in prediction:
+            event_non_animal_total += 1
+
     print("\nPredicting non_event content (Animal vs. Non-Animal):")
     for non_event in all_non_events:
         image_path = non_event.get_file_path()
@@ -71,6 +80,20 @@ def main():
         relative_image_path = os.path.relpath(image_path, directory_path)
         print(f"{relative_image_path}: {prediction}")
         
+        if "Animal" in prediction:
+            nEvent_animal_total += 1
+        if "Non-Animal" in prediction:
+            nEvent_non_animal_total += 1
+
+
+    # Calculate event percentages
+    total_events = len(all_events)
+    total_non_events = len(all_non_events)
+    event_animal_percentage = (event_animal_total / total_events) * 100 
+    event_nAnimal_percentage = (event_non_animal_total / total_events) * 100 
+    nEvent_animal_percentage = (nEvent_animal_total / total_non_events) * 100 
+    nEvent_nAnimal_percentage = (nEvent_non_animal_total / total_non_events) * 100 
+
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -79,7 +102,11 @@ def main():
     print(f"Time elapsed: {elapsed_time:.2f} seconds")
     print(f"Total Events Detected: {len(all_events)}")
     print(f"Total Non-Events Detected: {len(all_non_events)}")
+    print(f"Percentage of Events that are Animals: {event_animal_percentage:.0f}%")
+    print(f"Percentage of Events that are Non-Animals: {event_nAnimal_percentage:.0f}%")
+    print(f"Percentage of Non-Events that are Animals: {nEvent_animal_percentage:.0f}%")
+    print(f"Percentage of Non-Events that are Non-Animals: {nEvent_nAnimal_percentage:.0f}%")
+
 
 if __name__ == "__main__":
     main()
-
