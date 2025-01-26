@@ -1,4 +1,3 @@
-# main.py
 import os
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -9,103 +8,111 @@ from config import (
     change_threshold,
     white_pixel_threshold,
     output_log_path,
-    animal_training_path,      # New: path for training animal images
-    non_animal_training_path   # New: path for training non-animal images
+    animal_training_path,
+    non_animal_training_path
 )
 from sorting_utils import sort_images_by_date_time, group_images_by_event
 from classification import process_group
-
-# Import the classifier functions
 from sklearn_classifier import train_animal_classifier, predict_image
+
+
+def detect_motion(group):
+    """
+    A top-level function for motion detection.
+    This avoids the pickling issue on Windows when used with ProcessPoolExecutor.
+    """
+    events, non_events = process_group(group, change_threshold)
+    return events, non_events
+
 
 def main():
     start_time = time.time()
     print("Starting the image sorting process...")
 
-    # 1. Sort images by date/time (GDPR filter included)
+    # 1. Sort/Filter Images
+    print("Running preprocessing and sorting...")
     images_with_dates = sort_images_by_date_time(directory_path, white_pixel_threshold)
 
-    # 2. Group images by event
+    # 2. Group Images
     grouped_events = group_images_by_event(images_with_dates)
+    print(f"Total groups formed: {len(grouped_events)}")
 
-    all_events = []
-    all_non_events = []
+    # 3. Detect Events in Parallel
+    print("\nPerforming first-pass event detection...")
+    detected_events = []
+    low_conf_candidates = []  # below threshold => we'll check with AI
 
-    # 3. Parallel classification of each group
     with ProcessPoolExecutor(max_workers=min(os.cpu_count(), len(grouped_events))) as executor:
-        futures = {
-            executor.submit(process_group, group, change_threshold): group
-            for group in grouped_events
-        }
-        for i, future in enumerate(as_completed(futures)):
+        # Note: We now call the *top-level* function detect_motion
+        future_map = {executor.submit(detect_motion, g): g for g in grouped_events}
+
+        for i, future in enumerate(as_completed(future_map)):
             events, non_events = future.result()
-            all_events.extend(events)
-            all_non_events.extend(non_events)
+            detected_events.extend(events)
+            low_conf_candidates.extend(non_events)
 
-            percentage = ((i + 1) / len(grouped_events)) * 100
-            print(f"Processed: {i + 1}/{len(grouped_events)} ({percentage:.2f}% complete)", end="\r")
+            processed_count = i + 1
+            total_count = len(grouped_events)
+            percentage = (processed_count / total_count) * 100
+            print(f"First-pass detection: {processed_count}/{total_count} ({percentage:.2f}% complete)", end="\r")
 
+    print()  # Move to next line after loop
 
-    # 5. Log results
-    with open(output_log_path, 'w') as log_file:
-        log_file.write(f"Total Events Detected: {len(all_events)}\n")
-        log_file.write(f"Total Non-Events Detected: {len(all_non_events)}\n\nEvents:\n")
-        log_file.writelines(f"{event.get_file_path()}\n" for event in all_events)
+    print(f"\nDetected high-confidence events from first pass: {len(detected_events)}")
+    print(f"Below threshold (non_events) from first pass: {len(low_conf_candidates)}")
 
-    # 6. Train the animal classifier using labeled data
-    print("\nTraining animal classifier...")
+    # 4. Train model for second-pass classification
+    print("\nTraining animal classifier for second-pass analysis...")
     model = train_animal_classifier(animal_training_path)
-    event_animal_total = 0
-    event_non_animal_total = 0
-    nEvent_animal_total = 0
-    nEvent_non_animal_total = 0
 
-    # 7. Use the trained model to predict on each event
-    print("\nPredicting event content (Animal vs. Non-Animal):")
-    for event in all_events:
-        image_path = event.get_file_path()
-        prediction = predict_image(image_path, model)
-        relative_image_path = os.path.relpath(image_path, directory_path)
-        print(f"{relative_image_path}: {prediction}")
-        
-        if "Animal" in prediction:
-            event_animal_total += 1
-        if "Non-Animal" in prediction:
-            event_non_animal_total += 1
+    # 5. Second Pass: check below-threshold items with AI
+    print("\nSecond-pass AI check for below-threshold items...")
+    second_pass_events = []
+    confirmed_non_events = []
 
-    print("\nPredicting non_event content (Animal vs. Non-Animal):")
-    for non_event in all_non_events:
-        image_path = non_event.get_file_path()
-        prediction = predict_image(image_path, model)
-        relative_image_path = os.path.relpath(image_path, directory_path)
-        print(f"{relative_image_path}: {prediction}")
-        
-        if "Animal" in prediction:
-            nEvent_animal_total += 1
-        if "Non-Animal" in prediction:
-            nEvent_non_animal_total += 1
+    total_low_conf = len(low_conf_candidates)
+    for idx, item in enumerate(low_conf_candidates, start=1):
+        image_path = item.get_file_path()
+        label = predict_image(image_path, model)
 
+        # If the AI says "Animal," move it to events
+        if label == "Animal":
+            second_pass_events.append(item)
+        else:
+            confirmed_non_events.append(item)
 
-    # Calculate event percentages
-    total_events = len(all_events)
-    total_non_events = len(all_non_events)
-    event_animal_percentage = (event_animal_total / total_events) * 100 
-    event_nAnimal_percentage = (event_non_animal_total / total_events) * 100 
-    nEvent_animal_percentage = (nEvent_animal_total / total_non_events) * 100 
-    nEvent_nAnimal_percentage = (nEvent_non_animal_total / total_non_events) * 100 
+        percent_done = (idx / total_low_conf) * 100
+        print(f"Second-pass analysis: {idx}/{total_low_conf} ({percent_done:.2f}% complete)", end="\r")
+
+    print()
+
+    # Combine final events
+    all_events = detected_events + second_pass_events
+
+    print(f"\nConfirmed events after second pass: {len(all_events)}")
+    print(f"Confirmed non-events: {len(confirmed_non_events)}")
+
+    # 6. Save Images
+
+    print()
+
+    # 7. Write to Log
+    with open(output_log_path, 'w') as log_file:
+        log_file.write(f"Events Confirmed (All): {len(all_events)}\n")
+        #log_file.write(f"  - Recognized Species: {len(final_event_list)}\n")
+        #log_file.write(f"  - Unknown Species: {len(unknown_species)}\n")
+        log_file.write(f"Non-Events Confirmed: {len(confirmed_non_events)}\n")
+
+    # Summaries
+    print("\n=== FINAL RESULTS ===")
+    print(f"Total Confirmed Events: {len(all_events)}")
+    #print(f"  - Recognized Species: {len(final_event_list)}")
+    #print(f"  - Unknown Species: {len(unknown_species)}")
+    print(f"Total Confirmed Non-Events: {len(confirmed_non_events)}")
 
     end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    # 4. Output metrics
-    print(f"\nEvent sorting and classification complete.")
-    print(f"Time elapsed: {elapsed_time:.2f} seconds")
-    print(f"Total Events Detected: {len(all_events)}")
-    print(f"Total Non-Events Detected: {len(all_non_events)}")
-    print(f"Percentage of Events that are Animals: {event_animal_percentage:.0f}%")
-    print(f"Percentage of Events that are Non-Animals: {event_nAnimal_percentage:.0f}%")
-    print(f"Percentage of Non-Events that are Animals: {nEvent_animal_percentage:.0f}%")
-    print(f"Percentage of Non-Events that are Non-Animals: {nEvent_nAnimal_percentage:.0f}%")
+    elapsed = end_time - start_time
+    print(f"\nProcessing complete in {elapsed:.2f} seconds.")
 
 
 if __name__ == "__main__":
