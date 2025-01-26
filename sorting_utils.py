@@ -75,7 +75,7 @@ def sort_images_by_date_time(folder_path, white_pixel_threshold):
     
     images_with_dates = []
     for idx, (img, image_path) in enumerate(zip(images, image_paths), start=1):
-        print(f"Processing ({idx}/{len(image_files)}) - "
+        print(f"Processing to be classified images ({idx}/{len(image_files)}) - "
               f"{(idx / len(image_files)) * 100:.2f}% complete", end="\r")
 
         if is_not_gdpr_image(img, white_pixel_threshold):
