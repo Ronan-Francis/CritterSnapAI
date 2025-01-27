@@ -36,6 +36,8 @@ def main():
     # 2. Group Images
     grouped_events = group_images_by_event(images_with_dates)
     print(f"Total groups formed: {len(grouped_events)}")
+    for grouped_event in grouped_events:
+        print(f"  - Group size: {len(grouped_event)}")
 
     # 3. Detect Events in Parallel
     print("\nPerforming first-pass event detection...")
@@ -55,6 +57,7 @@ def main():
             total_count = len(grouped_events)
             percentage = (processed_count / total_count) * 100
             print(f"First-pass detection: {processed_count}/{total_count} ({percentage:.2f}% complete)", end="\r")
+            print(f"Group size: {len(future_map[future])}, Detected events: {len(detected_events)}, Non-events: {len(low_conf_candidates)}")
 
     print()  # Move to next line after loop
 

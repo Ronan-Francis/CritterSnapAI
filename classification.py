@@ -18,13 +18,13 @@ def process_image(image_objects, index, change_threshold):
     future = image_objects[index + 1].get_image() if index + 1 < len(image_objects) else None
 
     pixel_changes = measure_changes(past, present, future)
-    # print(f"Pixel changes: {pixel_changes:.2f}")
-
+    
     if pixel_changes > change_threshold:
         # This image is classified as event
         return image_objects[index], None
     else:
         # This image is classified as non-event
+        # print(f"Pixel changes: {pixel_changes:.2f}")
         return None, image_objects[index]
 
 
@@ -41,10 +41,14 @@ def process_group(group, change_threshold):
     """
     events = []
     non_events = []
+    print(f"Processing group of size {len(group)}")
     for index in range(1, len(group) - 1):
         ev, non_ev = process_image(group, index, change_threshold)
+        print(f"Processing group of size {len(group)}")
         if ev:
             events.append(ev)
         if non_ev:
             non_events.append(non_ev)
+            #print(f"Non-event detected at index {index}")
+            print(f"Processing non_events of size {len(non_events)}")
     return events, non_events
