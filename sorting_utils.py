@@ -83,6 +83,8 @@ def sort_images_by_date_time(folder_path, white_pixel_threshold):
             if date_time:
                 # Build an ImageObject
                 images_with_dates.append(ImageObject(img.copy(), date_time, image_path))
+        else:
+            print(f"GDPR-protected image found: {image_path}")
 
     images_with_dates.sort(key=lambda x: x.get_date())
     print("Image sorting complete.                ")
