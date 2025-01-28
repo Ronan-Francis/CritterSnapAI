@@ -22,6 +22,12 @@ def detect_motion(group):
     This avoids the pickling issue on Windows when used with ProcessPoolExecutor.
     """
     events, non_events = process_group(group, change_threshold)
+    
+    # Logging for debugging
+    print(f"Processing group of size {len(group)}")
+    print(f" - Detected events: {len(events)}")
+    print(f" - Non-events: {len(non_events)}")
+    
     return events, non_events
 
 
@@ -32,12 +38,20 @@ def main():
     # 1. Sort/Filter Images
     print("Running preprocessing and sorting...")
     images_with_dates = sort_images_by_date_time(directory_path, white_pixel_threshold)
+    print(f"Total images sorted: {len(images_with_dates)}")
+    for image_obj in images_with_dates:
+        print(f"  - {image_obj.get_file_path()}")
 
     # 2. Group Images
     grouped_events = group_images_by_event(images_with_dates)
     print(f"Total groups formed: {len(grouped_events)}")
     for grouped_event in grouped_events:
         print(f"  - Group size: {len(grouped_event)}")
+    total_grouped = sum(len(group) for group in grouped_events)
+    if total_grouped != len(images_with_dates):
+        print(f"Discrepancy in grouping: {total_grouped} grouped vs {len(images_with_dates)} total images.")
+    else:
+        print("All images are correctly grouped.")
 
     # 3. Detect Events in Parallel
     print("\nPerforming first-pass event detection...")
@@ -60,6 +74,12 @@ def main():
             print(f"Group size: {len(future_map[future])}, Detected events: {len(detected_events)}, Non-events: {len(low_conf_candidates)}")
 
     print()  # Move to next line after loop
+    # After first pass
+    total_processed = len(detected_events) + len(low_conf_candidates)
+    if total_processed != len(images_with_dates):
+        print(f"Warning: Total processed images ({total_processed}) does not match total images sorted ({len(images_with_dates)}).")
+    else:
+        print("All images have been processed in the first pass.")
 
     print(f"\nDetected high-confidence events from first pass: {len(detected_events)}")
     print(f"Below threshold (non_events) from first pass: {len(low_conf_candidates)}")
