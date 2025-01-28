@@ -42,5 +42,10 @@ def measure_changes(past, present, future, scale_factor=0.5):
 
     ssim_prev_curr = ssim(past_array, present_array, data_range=255)
     ssim_curr_next = ssim(present_array, future_array, data_range=255)
+    
+    avg_ssim = (ssim_prev_curr + ssim_curr_next) / 2
 
-    return (ssim_prev_curr + ssim_curr_next) / 2
+    # Convert similarity to difference
+    diff_value = 1 - avg_ssim
+
+    return diff_value
