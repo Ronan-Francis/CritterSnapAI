@@ -56,7 +56,7 @@ def load_images_parallel(root_dir, label=1, image_size=(64, 64),
                 percent_done = (i + 1) / total_files * 100
                 print(f"Loading images... {percent_done:.1f}% complete", end="\r")
     
-    print()  # Move to the next line after loop
+    print("")  # Move to the next line after loop
     labels = np.full(len(data), label, dtype=int)
     return np.array(data), labels
 
@@ -81,6 +81,7 @@ def train_animal_classifier(animal_path):
     best_model = None
     best_outlier_rate = float("inf")
     
+    print("Training models with different hyperparameters...")
     for nu_val in param_grid["nu"]:
         for gamma_val in param_grid["gamma"]:
             model = OneClassSVM(kernel="rbf", nu=nu_val, gamma=gamma_val)
