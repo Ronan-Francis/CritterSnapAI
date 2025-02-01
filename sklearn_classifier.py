@@ -35,26 +35,6 @@ def load_images_parallel(root_dir, label=1, image_size=(64, 64),
     """
     Load all images from `root_dir` (and subdirectories) in parallel.
     Converts them to grayscale, resizes, flattens, and assigns the same label.
-    
-    Parameters:
-    -----------
-    root_dir : str
-        Directory to walk recursively.
-    label : int
-        Label to assign to all images (e.g., 1 for animal).
-    image_size : tuple of ints
-        Desired (width, height) for each image.
-    max_workers : int
-        Number of worker threads to use.
-    print_every : int
-        Print progress every N images loaded.
-
-    Returns:
-    --------
-    X : np.ndarray of shape (n_samples, image_size[0]*image_size[1])
-        The image data.
-    y : np.ndarray of shape (n_samples,)
-        The labels (all = `label`).
     """
     file_paths = get_all_file_paths(root_dir)
     total_files = len(file_paths)
@@ -64,21 +44,19 @@ def load_images_parallel(root_dir, label=1, image_size=(64, 64),
     data = []
     # Parallel loading
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(_process_image, fp, image_size): fp 
-                   for fp in file_paths}
+        futures = {executor.submit(_process_image, fp, image_size): fp for fp in file_paths}
         
         for i, future in enumerate(as_completed(futures)):
             arr = future.result()
-            # If the image was loaded successfully, append
             if arr is not None:
                 data.append(arr)
             
             # Print progress less frequently
             if (i + 1) % print_every == 0:
                 percent_done = (i + 1) / total_files * 100
-                print(f"Loading training images... {percent_done:.1f}% complete", end="\r")
+                print(f"Loading images... {percent_done:.1f}% complete", end="\r")
     
-    print()  # move to the next line after loop
+    print()  # Move to the next line after loop
     labels = np.full(len(data), label, dtype=int)
     return np.array(data), labels
 
@@ -89,21 +67,6 @@ def load_images_parallel(root_dir, label=1, image_size=(64, 64),
 def train_animal_classifier(animal_path):
     """
     Trains a OneClassSVM to detect 'animal' images from `animal_path`.
-    
-    1. Loads all images in parallel and assigns label=1.
-    2. Splits data into train/validation sets.
-    3. Grid-search over a small set of (nu, gamma) hyperparameters.
-    4. Returns the best OneClassSVM.
-    
-    Parameters:
-    -----------
-    animal_path : str
-        Directory containing all animal images (recursive).
-    
-    Returns:
-    --------
-    best_model : OneClassSVM
-        The trained OneClassSVM with the best validation performance.
     """
     # 1. Load the data
     X, _ = load_images_parallel(animal_path, label=1, image_size=(64, 64))
@@ -114,22 +77,12 @@ def train_animal_classifier(animal_path):
     X_train, X_val = train_test_split(X, test_size=0.2, random_state=42)
     
     # 3. Hyperparameter grid search
-    param_grid = {
-        "nu": [0.001, 0.01, 0.1],
-        "gamma": ["scale", 1e-3, 1e-4]
-    }
-    total_combinations = len(param_grid["nu"]) * len(param_grid["gamma"])
-    combination_count = 0
-    
+    param_grid = {"nu": [0.001, 0.01, 0.1], "gamma": ["scale", 1e-3, 1e-4]}
     best_model = None
     best_outlier_rate = float("inf")
     
     for nu_val in param_grid["nu"]:
         for gamma_val in param_grid["gamma"]:
-            combination_count += 1
-            progress = (combination_count / total_combinations) * 100
-            print(f"Training... {progress:.1f}% of hyperparameter search completed", end="\r")
-            
             model = OneClassSVM(kernel="rbf", nu=nu_val, gamma=gamma_val)
             model.fit(X_train)
             
@@ -137,12 +90,11 @@ def train_animal_classifier(animal_path):
             outlier_count = np.sum(val_preds == -1)
             outlier_rate = outlier_count / len(X_val)
             
-            # Keep track of the model that has the lowest outlier rate
+            # Keep the model with the lowest outlier rate
             if outlier_rate < best_outlier_rate:
                 best_outlier_rate = outlier_rate
                 best_model = model
-    
-    print()  # Move to new line after search
+
     return best_model
 
 ###############################################################################
@@ -152,23 +104,8 @@ def train_animal_classifier(animal_path):
 def predict_image(file_path, model, image_size=(64, 64)):
     """
     Predict if a single image is 'Animal' or 'Non-Animal' using the trained model.
-    
-    Parameters:
-    -----------
-    file_path : str
-        Path to the image file.
-    model : OneClassSVM
-        The trained OneClassSVM.
-    image_size : tuple of ints
-        (width, height) to resize the image to.
-    
-    Returns:
-    --------
-    label : str
-        "Animal" or "Non-Animal".
     """
     img = Image.open(file_path).convert("L").resize(image_size)
     arr = np.array(img).flatten().reshape(1, -1)
-    
     prediction = model.predict(arr)[0]
     return "Animal" if prediction == 1 else "Non-Animal"
