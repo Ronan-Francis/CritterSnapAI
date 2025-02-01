@@ -12,6 +12,11 @@ change_threshold = 0.01 # Adjust this based on your images
 # The change_threshold is the pixel change threshold to classify an event
 white_pixel_threshold = 50000  # Adjust this based on your images
 
+# Edge detection configuration parameters
+edge_threshold = 50           # For Sobel gradient thresholding
+edge_confidence_threshold = 0.15  # Tune this value based on your experiments
+window_size = 20              # For blob detection in the edge map
+
 base_url = "https://lilawildlife.blob.core.windows.net/lila-wildlife/wcs-unzipped/animals/0011/"
 start_file = 1    # Starting file number
 end_file = 700    # Ending file number

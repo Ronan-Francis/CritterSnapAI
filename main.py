@@ -7,6 +7,7 @@ from config import (
     output_directory,
     change_threshold,
     white_pixel_threshold,
+    edge_confidence_threshold,
     output_log_path,
     animal_training_path,
     non_animal_training_path
@@ -21,7 +22,7 @@ def detect_motion(group):
     A top-level function for motion detection.
     This avoids the pickling issue on Windows when used with ProcessPoolExecutor.
     """
-    events, non_events = process_group(group, change_threshold)
+    events, non_events = process_group(group, change_threshold, edge_confidence_threshold)
     
     # Logging for debugging
     print(f"Processing group of size {len(group)}")
