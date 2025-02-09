@@ -16,8 +16,13 @@ def process_image(image_objects, index, change_threshold, edge_confidence_thresh
     # Ensure present is a PIL Image (as expected by compute_edge_confidence)
     edge_conf, _ = compute_edge_confidence(present, edge_threshold=50, window_size=20)
     
-    # Decide if the image is an event if either measure exceeds its threshold.
-    if (pixel_changes > change_threshold) or (edge_conf > edge_confidence_threshold):
+    # Normalize each metric by its threshold and compute a composite score.
+    # When both metrics are at their threshold, the normalized values are 1 and the sum is 2.
+    # Here, we choose a cutoff of 1.0, meaning that a high value in one metric can compensate
+    # for a lower value in the other.
+    composite_score = (pixel_changes / change_threshold) + (edge_conf / edge_confidence_threshold)
+    
+    if composite_score > 1.0:
         return image_objects[index], None
     else:
         return None, image_objects[index]
