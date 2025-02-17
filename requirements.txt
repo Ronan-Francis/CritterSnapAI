@@ -1,0 +1,7 @@
+numpy>=1.19.2
+Pillow>=9.0.0
+matplotlib>=3.4.0
+scikit-learn>=1.0.0
+ultralytics>=8.0.0
+tensorflow>=2.0.0
+torch>=1.10.0
