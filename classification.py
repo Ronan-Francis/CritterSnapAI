@@ -24,7 +24,7 @@ def process_image(image_objects, index, change_threshold, edge_confidence_thresh
     composite_score = (pixel_changes / change_threshold) + (edge_conf / edge_confidence_threshold)
     print(f"Composite score for image {image_objects[index].get_file_path()}: {composite_score}")
     
-    if composite_score > 1.0:
+    if composite_score < 5.0:
         return image_objects[index], None
     else:
         return None, image_objects[index]
