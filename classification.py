@@ -14,14 +14,15 @@ def process_image(image_objects, index, change_threshold, edge_confidence_thresh
     
     # Compute edge-based confidence.
     # Ensure present is a PIL Image (as expected by compute_edge_confidence)
-    # edge_conf, _ = compute_edge_confidence(present, edge_threshold=50, window_size=20)
-    edge_conf = 50.0  # Placeholder for now
+    edge_conf, _ = compute_edge_confidence(present, edge_threshold=50, window_size=20)
+    # edge_conf = 0.0  # Placeholder for now
     
     # Normalize each metric by its threshold and compute a composite score.
     # When both metrics are at their threshold, the normalized values are 1 and the sum is 2.
     # Here, we choose a cutoff of 1.0, meaning that a high value in one metric can compensate
     # for a lower value in the other.
     composite_score = (pixel_changes / change_threshold) + (edge_conf / edge_confidence_threshold)
+    print(f"Composite score for image {image_objects[index].get_file_path()}: {composite_score}")
     
     if composite_score > 1.0:
         return image_objects[index], None

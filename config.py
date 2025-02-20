@@ -3,7 +3,7 @@
 directory_path = r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\example\ds_researchATU"
 output_directory = r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\output"  # Adjust this with your correct path
 output_log_path = r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\output\output_log.txt"  # Adjust this with your correct path
-change_threshold = 0.01 # Adjust this based on your images
+change_threshold = 0.1 # Adjust this based on your images
 #Low values: 0.1 to 0.6
 #Medium values: 0.61 to 0.80
 #High values: 0.81 to 1.00

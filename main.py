@@ -97,7 +97,7 @@ def main():
     total_low_conf = len(low_conf_candidates)
     for idx, item in enumerate(low_conf_candidates, start=1):
         image_path = item.get_file_path()
-        label = classifier.predict_image(image_path)
+        label = predict_image(image_path, classifier)
 
         # If the AI says "Animal," move it to events
         if label == "Animal":
