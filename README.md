@@ -10,22 +10,22 @@ The project performs the following steps:
 
 1. **Image Preprocessing & Sorting**  
    Images are loaded from a specified directory, filtered to remove GDPR-protected images (based on white pixel thresholds), and sorted by their date/time metadata extracted from EXIF or file modification timestamps.  
-   *See [sorting_utils.py](&#8203;:contentReference[oaicite:0]{index=0}) and [gdpr_utils.py](&#8203;:contentReference[oaicite:1]{index=1}).*
+   *See [sorting_utils.py](sorting_utils.py) and [gdpr_utils.py](gdpr_utils.py).*
 
 2. **Grouping by Event**  
    Sorted images are grouped into events if the time difference between consecutive images is less than a defined threshold (e.g., one hour).  
-   *Refer to [sorting_utils.py](&#8203;:contentReference[oaicite:2]{index=2}).*
+   *Refer to [sorting_utils.py](sorting_utils.py).*
 
 3. **Motion Detection & Event Classification**  
    Each image group is analyzed in parallel using a two-tier approach:
    - **First Pass:** Uses structural similarity (SSIM) and edge detection methods to compute a composite score for identifying high-confidence events.  
-     *See [edge_detection.py](&#8203;:contentReference[oaicite:3]{index=3}) and [image_utils.py](&#8203;:contentReference[oaicite:4]{index=4}).*
+     *See [edge_detection.py](edge_detection.py) and [image_utils.py](image_utils.py).*
    - **Second Pass:** Applies a machine learning classifier (trained with a One-Class SVM) to re-evaluate images that did not meet the initial threshold, confirming animal presence when applicable.  
-     *See [classification.py](&#8203;:contentReference[oaicite:5]{index=5}) and [sklearn_classifier.py](&#8203;:contentReference[oaicite:6]{index=6}).*
+     *See [classification.py](classification.py) and [sklearn_classifier.py](sklearn_classifier.py).*
 
 4. **Parallel Processing**  
    The project leverages Python’s `concurrent.futures` to parallelize both event detection and image loading, ensuring efficient processing of large datasets.  
-   *Details can be found in [main.py](&#8203;:contentReference[oaicite:7]{index=7}) and [sorting_utils.py](&#8203;:contentReference[oaicite:8]{index=8}).*
+   *Details can be found in [main.py](main.py) and [sorting_utils.py](sorting_utils.py).*
 
 5. **Logging & Output**  
    After processing, results including confirmed events and non-events are logged to a user-specified output file, with options for further image saving and directory organization.
@@ -36,23 +36,23 @@ The project performs the following steps:
 
 - **Automated Image Sorting:**  
   Automatically organizes images by timestamp, taking into account missing or incomplete EXIF data.  
-  *[sorting_utils.py](&#8203;:contentReference[oaicite:9]{index=9})*
+  *[sorting_utils.py](sorting_utils.py)*
 
 - **GDPR Compliance Check:**  
   Filters out images that may be GDPR-protected by counting pure white pixels.  
-  *[gdpr_utils.py](&#8203;:contentReference[oaicite:10]{index=10})*
+  *[gdpr_utils.py](gdpr_utils.py)*
 
 - **Edge Detection & SSIM Analysis:**  
   Utilizes Sobel edge detection and the Structural Similarity Index Measure (SSIM) to quantify pixel changes and edge features in images.  
-  *[edge_detection.py](&#8203;:contentReference[oaicite:11]{index=11}) and [image_utils.py](&#8203;:contentReference[oaicite:12]{index=12})*
+  *[edge_detection.py](edge_detection.py) and [image_utils.py](image_utils.py)*
 
 - **Machine Learning Classification:**  
   Trains an animal classifier using a One-Class SVM on pre-labeled animal images to improve detection accuracy.  
-  *[sklearn_classifier.py](&#8203;:contentReference[oaicite:13]{index=13})*
+  *[sklearn_classifier.py](sklearn_classifier.py)*
 
 - **Parallel Processing:**  
   Employs multi-threading and multi-processing to handle large sets of images efficiently.  
-  *[main.py](&#8203;:contentReference[oaicite:14]{index=14}) and [sorting_utils.py](&#8203;:contentReference[oaicite:15]{index=15})*
+  *[main.py](main.py) and [sorting_utils.py](sorting_utils.py)*
 
 ---
 
