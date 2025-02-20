@@ -2,6 +2,7 @@ import os
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+from sklearn_classifier import train_animal_classifier, predict_image
 from config import (
     directory_path,
     output_directory,
@@ -14,7 +15,6 @@ from config import (
 )
 from sorting_utils import sort_images_by_date_time, group_images_by_event
 from classification import process_group
-from sklearn_classifier import train_animal_classifier, predict_image
 
 
 def detect_motion(group):
@@ -30,7 +30,6 @@ def detect_motion(group):
     print(f" - Non-events: {len(non_events)}")
     
     return events, non_events
-
 
 def main():
     start_time = time.time()
@@ -86,8 +85,9 @@ def main():
     print(f"Below threshold (non_events) from first pass: {len(low_conf_candidates)}")
 
     # 4. Train model for second-pass classification
-    print("\nTraining animal classifier for second-pass analysis...")
-    model = train_animal_classifier(animal_training_path)
+    # Train the classifier using the provided animal training path
+    print("Animal classifier training complete.")
+    classifier = train_animal_classifier(animal_training_path)
 
     # 5. Second Pass: check below-threshold items with AI
     print("\nSecond-pass AI check for below-threshold items...")
@@ -97,7 +97,7 @@ def main():
     total_low_conf = len(low_conf_candidates)
     for idx, item in enumerate(low_conf_candidates, start=1):
         image_path = item.get_file_path()
-        label = predict_image(image_path, model)
+        label = classifier.predict_image(image_path)
 
         # If the AI says "Animal," move it to events
         if label == "Animal":
@@ -117,27 +117,21 @@ def main():
     print(f"Confirmed non-events: {len(confirmed_non_events)}")
 
     # 6. Save Images
-
-    print()
+    # (Implementation not provided, assume it's handled elsewhere or left as future work)
 
     # 7. Write to Log
     with open(output_log_path, 'w') as log_file:
         log_file.write(f"Events Confirmed (All): {len(all_events)}\n")
-        #log_file.write(f"  - Recognized Species: {len(final_event_list)}\n")
-        #log_file.write(f"  - Unknown Species: {len(unknown_species)}\n")
         log_file.write(f"Non-Events Confirmed: {len(confirmed_non_events)}\n")
 
     # Summaries
     print("\n=== FINAL RESULTS ===")
     print(f"Total Confirmed Events: {len(all_events)}")
-    #print(f"  - Recognized Species: {len(final_event_list)}")
-    #print(f"  - Unknown Species: {len(unknown_species)}")
     print(f"Total Confirmed Non-Events: {len(confirmed_non_events)}")
 
     end_time = time.time()
     elapsed = end_time - start_time
     print(f"\nProcessing complete in {elapsed:.2f} seconds.")
-
 
 if __name__ == "__main__":
     main()
