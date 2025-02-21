@@ -2,22 +2,13 @@ import os
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+import config
 from sklearn_classifier import train_animal_classifier, predict_image
-from config import (
-    directory_path,
-    output_directory,
-    change_threshold,
-    white_pixel_threshold,
-    edge_confidence_threshold,
-    output_log_path,
-    animal_training_path,
-    non_animal_training_path
-)
+from config import run
 from sorting_utils import sort_images_by_date_time, group_images_by_event
 from classification import process_group
 
-
-def detect_motion(group):
+def detect_motion(group, change_threshold, edge_confidence_threshold):
     """
     A top-level function for motion detection.
     This avoids the pickling issue on Windows when used with ProcessPoolExecutor.
@@ -33,6 +24,18 @@ def detect_motion(group):
 
 def main():
     start_time = time.time()
+    # Get the configuration (updates or defaults) via the run() function
+    config_values = run()
+    
+    # Extract configuration values from the returned dictionary
+    directory_path = config_values["directory_path"]
+    output_directory = config_values["output_directory"]
+    change_threshold = config_values["change_threshold"]
+    white_pixel_threshold = config_values["white_pixel_threshold"]
+    edge_confidence_threshold = config_values["edge_confidence_threshold"]
+    output_log_path = config_values["output_log_path"]
+    animal_training_path = config_values["animal_training_path"]
+    non_animal_training_path = config_values["non_animal_training_path"]
     print("Starting the image sorting process...")
 
     # 1. Sort/Filter Images
@@ -60,7 +63,7 @@ def main():
 
     with ProcessPoolExecutor(max_workers=min(os.cpu_count(), len(grouped_events))) as executor:
         # Note: We now call the *top-level* function detect_motion
-        future_map = {executor.submit(detect_motion, g): g for g in grouped_events}
+        future_map = {executor.submit(detect_motion, g, change_threshold, edge_confidence_threshold): g for g in grouped_events}
 
         for i, future in enumerate(as_completed(future_map)):
             events, non_events = future.result()
