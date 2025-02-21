@@ -9,22 +9,17 @@ def process_image(image_objects, index, change_threshold, edge_confidence_thresh
     present = image_objects[index].get_image()
     future = image_objects[index + 1].get_image() if index + 1 < len(image_objects) else None
 
-    # Existing measure based on SSIM changes
+    # Compute SSIM-based pixel changes.
     pixel_changes = measure_changes(past, present, future)
     
     # Compute edge-based confidence.
-    # Ensure present is a PIL Image (as expected by compute_edge_confidence)
     edge_conf, _ = compute_edge_confidence(present, edge_threshold=50, window_size=20)
-    # edge_conf = 0.0  # Placeholder for now
     
     # Normalize each metric by its threshold and compute a composite score.
-    # When both metrics are at their threshold, the normalized values are 1 and the sum is 2.
-    # Here, we choose a cutoff of 1.0, meaning that a high value in one metric can compensate
-    # for a lower value in the other.
     composite_score = (pixel_changes / change_threshold) + (edge_conf / edge_confidence_threshold)
     print(f"Composite score for image {image_objects[index].get_file_path()}: {composite_score}")
     
-    if composite_score < 5.0:
+    if composite_score > 5.0:
         return image_objects[index], None
     else:
         return None, image_objects[index]
@@ -32,14 +27,9 @@ def process_image(image_objects, index, change_threshold, edge_confidence_thresh
 
 def process_group(group, change_threshold, edge_confidence_threshold):
     """
-    Processes a group of images (event cluster) to classify each image as event or non-event.
-
-    Parameters:
-    - group: A list of ImageObject instances
-    - change_threshold: Threshold above which we classify as event
-
+    Processes a group of images (an event cluster) to classify each image as event or non-event.
     Returns:
-    - (events, non_events): two lists of ImageObject
+      (events, non_events): two lists of ImageObject
     """
     events = []
     non_events = []
@@ -51,3 +41,18 @@ def process_group(group, change_threshold, edge_confidence_threshold):
             non_events.append(non_ev)
     return events, non_events
 
+
+def detect_motion(group, change_threshold, edge_confidence_threshold):
+    """
+    Top-level function for motion detection.
+    This function is designed to be used with parallel processing frameworks (e.g., ProcessPoolExecutor)
+    to avoid pickling issues on Windows.
+    """
+    events, non_events = process_group(group, change_threshold, edge_confidence_threshold)
+    
+    # Debug logging.
+    print(f"Processing group of size {len(group)}")
+    print(f" - Detected events: {len(events)}")
+    print(f" - Non-events: {len(non_events)}")
+    
+    return events, non_events
