@@ -1,14 +1,20 @@
 import json
+import os
+from random import sample
+from statistics import mean
+from PIL import Image
+from edge_detection import compute_edge_confidence
+from image_utils import measure_changes
 
 # Default configuration parameters
 DEFAULT_CONFIG = {
     "directory_path": r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\example\ds_researchATU",
     "output_directory": r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\output",
     "output_log_path": r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\output\output_log.txt",
-    "change_threshold": 0.1,           # 0.1 to 0.6: low, 0.61 to 0.80: medium, 0.81 to 1.00: high
+    "change_threshold": 0.1,           # This value may be updated dynamically.
     "white_pixel_threshold": 50000,
     "edge_threshold": 50,
-    "edge_confidence_threshold": 0.15,
+    "edge_confidence_threshold": 0.15,  # This value may be updated dynamically.
     "window_size": 20,
     "base_url": "https://lilawildlife.blob.core.windows.net/lila-wildlife/wcs-unzipped/animals/0011/",
     "start_file": 1,
@@ -16,6 +22,7 @@ DEFAULT_CONFIG = {
     "animal_training_path": r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\example\as_conservationistFrankfurt\IE_Forest_County_Wicklow_21_loc_01-20241031T145429Z-001",
     "non_animal_training_path": r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\example\eccv_18_all_images_sm"
 }
+
 
 def load_config_from_file(file_path):
     """
@@ -32,6 +39,7 @@ def load_config_from_file(file_path):
     print(f"Configuration loaded from {file_path}.")
     return config
 
+
 def save_config_to_file(config, file_path):
     """
     Saves the provided configuration dictionary to a JSON file.
@@ -46,6 +54,7 @@ def save_config_to_file(config, file_path):
         print(f"Configuration saved to {file_path}.")
     except Exception as e:
         print(f"Failed to save configuration: {e}")
+
 
 def config_menu(initial_config=None):
     """
@@ -136,35 +145,117 @@ Configuration Menu:
     print("Configuration updated.")
     return config
 
+
+def compute_dynamic_thresholds(config: dict, sample_fraction: float = 0.1) -> dict:
+    """
+    Computes dynamic thresholds using a small random sample of the animal training data.
+    
+    It calculates average edge confidence and change measures (using triplets of images)
+    from a subset of images, then updates the 'edge_confidence_threshold' and 'change_threshold'
+    in the configuration.
+
+    Parameters:
+        config (dict): The current configuration dictionary.
+        sample_fraction (float): The fraction of images to sample from the training set.
+
+    Returns:
+        dict: The updated configuration dictionary with new threshold values.
+    """
+    training_path = config.get("animal_training_path")
+    if not training_path or not os.path.isdir(training_path):
+        print("Invalid animal training path for dynamic thresholding.")
+        return config
+
+    # Gather all image file paths from the training folder.
+    files = [os.path.join(training_path, f)
+             for f in os.listdir(training_path)
+             if os.path.isfile(os.path.join(training_path, f))]
+    if not files:
+        print("No training images found.")
+        return config
+
+    # Determine sample size (at least 3 images required for triplet-based measures).
+    sample_size = max(3, int(len(files) * sample_fraction))
+    sample_size = min(sample_size, len(files))
+    sample_files = sample(files, sample_size)
+    sample_files.sort()  # Sorting by file name; adjust if needed for chronological order.
+
+    # Compute edge confidences for each sample image.
+    edge_confidences = []
+    for file in sample_files:
+        try:
+            with Image.open(file) as img:
+                edge_conf, _ = compute_edge_confidence(
+                    img,
+                    edge_threshold=config.get("edge_threshold", 50),
+                    window_size=config.get("window_size", 20)
+                )
+                edge_confidences.append(edge_conf)
+        except Exception as e:
+            print(f"Error processing {file}: {e}")
+
+    if edge_confidences:
+        new_edge_conf_threshold = mean(edge_confidences)
+    else:
+        new_edge_conf_threshold = config.get("edge_confidence_threshold", 0.15)
+
+    # Compute change measures using triplets of images.
+    change_measures = []
+    if len(sample_files) >= 3:
+        images = []
+        for file in sample_files:
+            try:
+                images.append(Image.open(file))
+            except Exception as e:
+                print(f"Error loading {file}: {e}")
+        # Compute measure_changes for each consecutive triplet.
+        for i in range(1, len(images) - 1):
+            change = measure_changes(images[i - 1], images[i], images[i + 1])
+            change_measures.append(change)
+        if change_measures:
+            new_change_threshold = mean(change_measures)
+        else:
+            new_change_threshold = config.get("change_threshold", 0.1)
+    else:
+        new_change_threshold = config.get("change_threshold", 0.1)
+
+    print(f"Dynamic Thresholding: new change_threshold = {new_change_threshold:.3f}, "
+          f"new edge_confidence_threshold = {new_edge_conf_threshold:.3f}")
+    config["change_threshold"] = new_change_threshold
+    config["edge_confidence_threshold"] = new_edge_conf_threshold
+    return config
+
+
 def run():
     """
     Run the configuration setup. This function allows you to either use the default
-    configuration or update it interactively.
-    
-    If you choose not to update, the default (or file-loaded) configuration is used.
-    Otherwise, you can edit the configuration and have it saved to a file.
-    
+    configuration, load an existing configuration, or update it interactively.
+    You also have the option to apply dynamic thresholding using a small sample of
+    the animal training data.
+
     Returns:
       - The configuration dictionary to be used.
     """
-    # Ask the user whether to use the current configuration as-is or update it.
-    update_choice = input("Do you want to update the configuration? (y/n, default n): ").strip().lower()
-    
-    # Attempt to load existing config from file if available
+    # Attempt to load existing configuration from file if available.
     try:
-        config = load_config_from_file("config.json")
+        config_data = load_config_from_file("config.json")
     except Exception:
         print("No existing configuration file found. Using default configuration.")
-        config = DEFAULT_CONFIG.copy()
-    
+        config_data = DEFAULT_CONFIG.copy()
+
+    update_choice = input("Do you want to update the configuration? (y/n, default n): ").strip().lower()
     if update_choice == "y":
-        config = config_menu(config)
-        save_config_to_file(config, "config.json")
+        config_data = config_menu(config_data)
+        save_config_to_file(config_data, "config.json")
     else:
         print("Using the current configuration as is.")
-    
+
+    dynamic_choice = input("Apply dynamic thresholding using a sample of animal training data? (y/n, default n): ").strip().lower()
+    if dynamic_choice == "y":
+        config_data = compute_dynamic_thresholds(config_data)
+
     print("\nFinal configuration:")
-    for key, value in config.items():
+    for key, value in config_data.items():
         print(f"{key}: {value}")
 
-    return config
+    return config_data
