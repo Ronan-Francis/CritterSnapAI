@@ -1,36 +1,46 @@
-from PIL import Image, ImageFilter
+from PIL import Image
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
+from typing import Optional
 
-def downsample_image(img, scale_factor=0.5):
+def downsample_image(img: Image.Image, scale_factor: float = 0.5) -> Image.Image:
     """
-    Downsamples (resizes) the given image by the scale_factor.
+    Downsamples (resizes) the given image by the provided scale factor.
 
     Parameters:
-    - img: a Pillow Image object
-    - scale_factor: how much to scale (0.5 = half size)
+        img (Image.Image): The Pillow Image to downsample.
+        scale_factor (float): The factor by which to scale the image (e.g., 0.5 for half-size).
 
     Returns:
-    - A new, resized Pillow Image object
+        Image.Image: The resized image.
     """
     width, height = img.size
     return img.resize((int(width * scale_factor), int(height * scale_factor)))
 
-def measure_changes(past, present, future, scale_factor=0.5):
+def measure_changes(past: Optional[Image.Image], 
+                    present: Optional[Image.Image], 
+                    future: Optional[Image.Image], 
+                    scale_factor: float = 0.5) -> float:
     """
-    Measures pixel changes between three images to classify events using SSIM.
-    
+    Measures pixel changes between three images using the Structural Similarity Index (SSIM).
+
+    The function downscales each image, converts them to grayscale, computes SSIM between the
+    past and present images as well as between the present and future images, then returns the 
+    average difference (1 - average SSIM).
+
+    If any image is missing (None), the function returns 0.
+
     Parameters:
-    - past: The past image (PIL Image)
-    - present: The present image (PIL Image)
-    - future: The future image (PIL Image)
-    - scale_factor: The factor by which to downsample the images
-    
+        past (Optional[Image.Image]): The past image.
+        present (Optional[Image.Image]): The current image.
+        future (Optional[Image.Image]): The future image.
+        scale_factor (float): The factor by which to downsample the images.
+
     Returns:
-    - The average SSIM between (past, present) and (present, future)
+        float: The difference measure derived from SSIM (0 indicates perfect similarity).
     """
     if past is None or present is None or future is None:
-        return 0
+        return 0.0
 
     past_ds = downsample_image(past, scale_factor)
     present_ds = downsample_image(present, scale_factor)
@@ -42,10 +52,6 @@ def measure_changes(past, present, future, scale_factor=0.5):
 
     ssim_prev_curr = ssim(past_array, present_array, data_range=255)
     ssim_curr_next = ssim(present_array, future_array, data_range=255)
-    
     avg_ssim = (ssim_prev_curr + ssim_curr_next) / 2
 
-    # Convert similarity to difference
-    diff_value = 1 - avg_ssim
-
-    return diff_value
+    return 1 - avg_ssim
