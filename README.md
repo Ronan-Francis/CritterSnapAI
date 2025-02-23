@@ -27,8 +27,9 @@ The project performs the following steps:
    The project leverages Python’s `concurrent.futures` to parallelize both event detection and image loading, ensuring efficient processing of large datasets.  
    *Details can be found in [main.py](main.py) and [sorting_utils.py](sorting_utils.py).*
 
-5. **Logging & Output**  
-   After processing, results including confirmed events and non-events are logged to a user-specified output file, with options for further image saving and directory organization.
+5. **Interactive Configuration & Logging**
+An interactive configuration menu allows users to update various parameters (such as directory paths, thresholds, and URLs) at runtime. Results are logged to a specified file, and images can be organized into directories for further inspection.
+*Configuration is managed via [config.py](config.py).*
 
 ---
 
@@ -53,6 +54,12 @@ The project performs the following steps:
 - **Parallel Processing:**  
   Employs multi-threading and multi-processing to handle large sets of images efficiently.  
   *[main.py](main.py) and [sorting_utils.py](sorting_utils.py)*
+
+- **Interactive Configuration:**
+   An interactive menu in [config.py](config.py) lets users customize parameters, including paths and thresholds, ensuring flexibility across different datasets and environments.
+
+Structured Data Management:
+The ImageObject class encapsulated in [data_structures.py](data_structures.py) neatly stores image data along with its timestamp and file path for easier processing and logging.
 
 ---
 
