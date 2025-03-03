@@ -1,43 +1,33 @@
 import os
-import numpy as np
 from PIL import Image
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from joblib import Parallel, delayed
+import numpy as np
 from sklearn.svm import OneClassSVM
 from sklearn.model_selection import train_test_split
-from typing import List, Tuple, Optional
+from joblib import Parallel, delayed
+from concurrent.futures import ThreadPoolExecutor
 
-def get_all_file_paths(root_dir: str) -> List[str]:
-    """Return a list of all file paths in the given directory recursively."""
+def get_all_file_paths(root_dir: str):
     return [os.path.join(root, fname)
             for root, _, files in os.walk(root_dir)
             for fname in files]
 
-def _process_image(file_path: str, image_size: Tuple[int, int] = (64, 64)) -> Optional[np.ndarray]:
-    """Load and preprocess a single image; return a flattened numpy array or None on failure."""
+def _process_image(file_path: str, image_size=(64, 64)):
     try:
         with Image.open(file_path) as img:
             img = img.convert("L").resize(image_size)
             return np.array(img).flatten()
-    except Exception as e:
-        # Optionally log error details here
+    except Exception:
         return None
 
-def load_images_parallel(root_dir: str, label: int = 1, image_size: Tuple[int, int] = (64, 64),
-                         max_workers: int = 8, print_every: int = 50) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Load and preprocess images from a directory in parallel.
-    Returns a tuple of (data array, label array).
-    """
+def load_images_parallel(root_dir: str, image_size=(64, 64), max_workers=8, print_every=50):
     file_paths = get_all_file_paths(root_dir)
     total_files = len(file_paths)
     if total_files == 0:
-        return np.array([]), np.array([])
-
+        return np.array([])
     data = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(_process_image, fp, image_size): fp for fp in file_paths}
-        for i, future in enumerate(as_completed(futures)):
+        for i, future in enumerate(futures):
             result = future.result()
             if result is not None:
                 data.append(result)
@@ -45,11 +35,9 @@ def load_images_parallel(root_dir: str, label: int = 1, image_size: Tuple[int, i
                 percent_done = (i + 1) / total_files * 100
                 print(f"Loading images... {percent_done:.1f}% complete", end="\r")
     print("")
-    labels = np.full(len(data), label, dtype=int)
-    return np.array(data), labels
+    return np.array(data)
 
-def evaluate_model(params: Tuple[float, float], X_train: np.ndarray, X_val: np.ndarray) -> Tuple[float, OneClassSVM, Tuple[float, float]]:
-    """Train and evaluate a One-Class SVM model using given hyperparameters."""
+def evaluate_model(params, X_train, X_val):
     nu_val, gamma_val = params
     model = OneClassSVM(kernel="rbf", nu=nu_val, gamma=gamma_val)
     model.fit(X_train)
@@ -58,12 +46,7 @@ def evaluate_model(params: Tuple[float, float], X_train: np.ndarray, X_val: np.n
     return outlier_rate, model, params
 
 def train_animal_classifier(animal_path: str) -> OneClassSVM:
-    """
-    Trains the animal classifier using images from the provided directory.
-    Splits the data, evaluates different hyperparameter combinations in parallel,
-    and returns the best model.
-    """
-    X, _ = load_images_parallel(animal_path, label=1, image_size=(64, 64))
+    X = load_images_parallel(animal_path, image_size=(64, 64))
     if X.size == 0:
         raise ValueError(f"No images found in '{animal_path}'.")
     X_train, X_val = train_test_split(X, test_size=0.2, random_state=42)
@@ -81,10 +64,7 @@ def train_animal_classifier(animal_path: str) -> OneClassSVM:
     print(f"Best hyperparameters: nu={best_params[0]}, gamma={best_params[1]} with outlier rate: {best_outlier_rate:.3f}")
     return best_model
 
-def predict_image(file_path: str, model: OneClassSVM, image_size: Tuple[int, int] = (64, 64)) -> str:
-    """
-    Predict whether a single image is 'Animal' or 'Non-Animal' using the trained model.
-    """
+def predict_image(file_path: str, model: OneClassSVM, image_size=(64, 64)) -> str:
     with Image.open(file_path) as img:
         img = img.convert("L").resize(image_size)
         arr = np.array(img).flatten().reshape(1, -1)
