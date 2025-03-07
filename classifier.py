@@ -51,7 +51,7 @@ def train_animal_classifier(animal_path: str) -> OneClassSVM:
         raise ValueError(f"No images found in '{animal_path}'.")
     X_train, X_val = train_test_split(X, test_size=0.2, random_state=42)
     param_grid = {
-        "nu": [0.001, 0.01, 0.1],
+        "nu": [0.001],
         "gamma": [0.005, 1e-3, 1e-4]
     }
     param_combinations = [(nu, gamma) for nu in param_grid["nu"] for gamma in param_grid["gamma"]]

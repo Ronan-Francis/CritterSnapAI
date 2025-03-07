@@ -3,6 +3,7 @@ from datetime import datetime
 from PIL import Image
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
+from scipy.ndimage import convolve
 
 @dataclass
 class ImageObject:
@@ -33,16 +34,9 @@ class ImageProcessor:
                        [ 0,  0,  0],
                        [ 1,  2,  1]], dtype=np.float32)
         
-        H, W = gray_image.shape
-        padded = np.pad(gray_image, ((1, 1), (1, 1)), mode='edge')
-        Gx = np.empty((H, W), dtype=np.float32)
-        Gy = np.empty((H, W), dtype=np.float32)
-        for i in range(H):
-            for j in range(W):
-                patch = padded[i:i+3, j:j+3]
-                Gx[i, j] = np.sum(Kx * patch)
-                Gy[i, j] = np.sum(Ky * patch)
-        grad_magnitude = np.sqrt(Gx**2 + Gy**2)
+        Gx = convolve(gray_image, Kx, mode='reflect')
+        Gy = convolve(gray_image, Ky, mode='reflect')
+        grad_magnitude = np.hypot(Gx, Gy)
         return grad_magnitude
 
     @staticmethod
