@@ -2,7 +2,7 @@ import json
 import os
 
 DEFAULT_CONFIG = {
-    "directory_path": r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\example\ds_researchATU",
+    "directory_path": r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\example\as_conservationistFrankfurt\IE_Forest_County_Wicklow_21_loc_01-20241031T145429Z-001",
     "output_directory": r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\output",
     "output_log_path": r"C:\Users\rf4thyrvm\Documents\CritterSnap\data\output\output_log.txt",
     "change_threshold": 0.1,
