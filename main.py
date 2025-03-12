@@ -4,6 +4,7 @@ from config_manager import ConfigManager
 from file_utils import sort_images_by_date_time, group_images_by_event, create_event_directories
 from classifier import train_animal_classifier, predict_image
 from event_detector import select_best_photo_in_group
+from shutil import copy2
 
 def run_pipeline():
     start_time = time.time()
@@ -57,6 +58,15 @@ def run_pipeline():
     
     print(f"Total confirmed events: {len(final_events)}")
     print(f"Total confirmed non-events: {len(confirmed_non_events)}")
+    # Create the destination directory for final events.
+    final_events_output_dir = os.path.join(config["output_directory"], "final_events")
+    os.makedirs(final_events_output_dir, exist_ok=True)
+
+    # Copy each final event's file into the destination directory.
+    for event in final_events:
+        src = event.get_file_path()
+        copy2(src, final_events_output_dir)
+        print(f"Copied {src} to {final_events_output_dir}")
 
     elapsed = time.time() - start_time
     print(f"Processing complete in {elapsed:.2f} seconds.")
