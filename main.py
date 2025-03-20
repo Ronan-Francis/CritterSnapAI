@@ -7,7 +7,6 @@ from event_detector import select_best_photo_in_group
 from shutil import copy2
 
 def run_pipeline():
-    start_time = time.time()
     
     # Load and update configuration.
     config_mgr = ConfigManager()
@@ -24,6 +23,7 @@ def run_pipeline():
 
     # Sort and group images.
     print("Sorting images...")
+    start_time = time.time()
     images = sort_images_by_date_time(config["directory_path"], config["white_pixel_threshold"])
     groups = group_images_by_event(images)
     print(f"Total groups formed: {len(groups)}")
