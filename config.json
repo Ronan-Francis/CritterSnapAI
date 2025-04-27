@@ -1,0 +1,15 @@
+{
+    "directory_path": "C:\\Users\\rf4thyrvm\\Documents\\CritterSnap\\data\\example\\as_conservationistFrankfurt\\IE_Forest_County_Wicklow_21_loc_01-20241031T145429Z-001\\IE_Forest_County_Wicklow_21_loc_17",
+    "output_directory": "C:\\Users\\rf4thyrvm\\Documents\\CritterSnap\\data\\output",
+    "output_log_path": "C:\\Users\\rf4thyrvm\\Documents\\CritterSnap\\data\\output\\output_log.txt",
+    "change_threshold": 0.1,
+    "white_pixel_threshold": 50000,
+    "edge_threshold": 50,
+    "edge_confidence_threshold": 0.15,
+    "window_size": 20,
+    "base_url": "https://lilawildlife.blob.core.windows.net/lila-wildlife/wcs-unzipped/animals/0011/",
+    "start_file": 1,
+    "end_file": 700,
+    "animal_training_path": "C:\\Users\\rf4thyrvm\\Documents\\CritterSnap\\data\\example\\as_conservationistFrankfurt\\IE_Forest_County_Wicklow_21_loc_01-20241031T145429Z-001",
+    "non_animal_training_path": "C:\\Users\\rf4thyrvm\\Documents\\CritterSnap\\data\\example\\eccv_18_all_images_sm"
+}
